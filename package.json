@@ -1,7 +1,7 @@
-
 {
-  "name": "termux-heroku-backend",
+  "name": "termux-scripts-backend",
   "version": "1.0.0",
+  "description": "Backend para servir scripts Python desde Heroku",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

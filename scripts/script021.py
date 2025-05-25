@@ -1,2 +1,2 @@
-# Script de ejemplo: script021
-print('Ejecutando script021...')
+# Script 021
+print('Este es el script 021')
