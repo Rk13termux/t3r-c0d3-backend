@@ -1,65 +1,72 @@
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.security import OAuth2PasswordBearer
+# main.py
+import os
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
-from jose import jwt, JWTError
+from dotenv import load_dotenv
+import jwt
 from datetime import datetime, timedelta
 
-# Configuración
-SECRET_KEY = "CAMBIA_ESTO_POR_UNA_CLAVE_SECRETA"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 días
+# Cargar variables de entorno
+load_dotenv()
+
+JWT_SECRET = os.getenv("JWT_SECRET")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+JWT_ALGORITHM = "HS256"
+
+if not JWT_SECRET or not TELEGRAM_BOT_TOKEN:
+    raise RuntimeError("Faltan variables JWT_SECRET o TELEGRAM_BOT_TOKEN en .env")
 
 app = FastAPI()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+# CORS para desarrollo
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Simulación de base de datos en memoria
-fake_db = {}
+users_db = {}
 
-class User(BaseModel):
+class TelegramAuth(BaseModel):
     telegram_id: str
-    username: Optional[str] = None
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+def create_access_token(data: dict, expires_delta: int = 60*24):
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    expire = datetime.utcnow() + timedelta(minutes=expires_delta)
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=401,
-        detail="No autorizado",
-        headers={"WWW-Authenticate": "Bearer"},
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Error interno del servidor"}
     )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        telegram_id: str = payload.get("sub")
-        if telegram_id is None or telegram_id not in fake_db:
-            raise credentials_exception
-        return fake_db[telegram_id]
-    except JWTError:
-        raise credentials_exception
 
-@app.post("/register/telegram", response_model=Token)
-def register_telegram(user: User):
-    if user.telegram_id in fake_db:
+@app.post("/register/telegram")
+def register_telegram(auth: TelegramAuth):
+    if not auth.telegram_id:
+        raise HTTPException(status_code=400, detail="telegram_id requerido")
+    if auth.telegram_id in users_db:
         raise HTTPException(status_code=400, detail="Usuario ya registrado")
-    fake_db[user.telegram_id] = user.dict()
-    access_token = create_access_token(data={"sub": user.telegram_id}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    return {"access_token": access_token, "token_type": "bearer"}
+    users_db[auth.telegram_id] = {}
+    token = create_access_token({"telegram_id": auth.telegram_id})
+    return {"access_token": token}
 
-@app.post("/login/telegram", response_model=Token)
-def login_telegram(user: User):
-    if user.telegram_id not in fake_db:
-        raise HTTPException(status_code=400, detail="Usuario no registrado")
-    access_token = create_access_token(data={"sub": user.telegram_id}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    return {"access_token": access_token, "token_type": "bearer"}
+@app.post("/login/telegram")
+def login_telegram(auth: TelegramAuth):
+    if not auth.telegram_id:
+        raise HTTPException(status_code=400, detail="telegram_id requerido")
+    if auth.telegram_id not in users_db:
+        raise HTTPException(status_code=401, detail="Usuario no registrado")
+    token = create_access_token({"telegram_id": auth.telegram_id})
+    return {"access_token": token}
 
-@app.get("/me")
-def read_users_me(current_user: dict = Depends(get_current_user)):
-    return current_user
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
