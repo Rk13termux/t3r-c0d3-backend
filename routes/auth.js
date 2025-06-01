@@ -1,38 +1,28 @@
 const express = require('express');
 const router = express.Router();
 
-// Simulación de base de datos de usuarios
-let users = [];
-
-// Registro
+// Ruta: POST /api/auth/register
 router.post('/register', (req, res) => {
   const { username, email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email y contraseña son requeridos.' });
+  // Validación básica
+  if (!email || !password || !username) {
+    return res.status(400).json({ message: 'Username, email y contraseña son requeridos.' });
   }
 
-  // Aquí deberías validar el email, encriptar la contraseña y guardarlo en MongoDB.
-  const newUser = { id: users.length + 1, username, email, password };
-  users.push(newUser);
+  // Simulación de registro (en la vida real guardarías en MongoDB)
+  const newUser = {
+    id: Date.now(),
+    username,
+    email,
+    password
+  };
 
-  res.status(201).json({ message: 'Usuario creado exitosamente.', user: newUser });
-});
-
-// Login
-router.post('/login', (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email y contraseña son requeridos.' });
-  }
-
-  const user = users.find(u => u.email === email && u.password === password);
-  if (!user) {
-    return res.status(401).json({ message: 'Credenciales inválidas.' });
-  }
-
-  res.json({ message: 'Login exitoso.', user });
+  // Enviar respuesta simulada
+  res.status(201).json({
+    message: 'Usuario registrado exitosamente.',
+    user: newUser
+  });
 });
 
 module.exports = router;

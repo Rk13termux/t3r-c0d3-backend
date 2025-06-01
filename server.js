@@ -3,10 +3,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-// Rutas
+// Importar rutas
 const authRoutes = require('./routes/auth');
-const paymentsRoutes = require('./routes/payments');
-const scriptsRoutes = require('./routes/scripts');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -15,7 +13,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Conexión a MongoDB
+// Conectar a MongoDB
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -25,15 +23,13 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // Rutas
 app.use('/api/auth', authRoutes);
-app.use('/api/payments', paymentsRoutes);
-app.use('/api/scripts', scriptsRoutes);
 
 // Ruta raíz
 app.get('/', (req, res) => {
   res.send('🚀 Backend de la Tienda de Scripts funcionando.');
 });
 
-// Servidor
+// Arrancar servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
 });
