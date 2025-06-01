@@ -1,7 +1,22 @@
+// models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+/**
+ * Esquema de Usuario.
+ * Incluye:
+ * - username
+ * - email
+ * - password (hash)
+ * - role: free, premium, admin
+ */
 const userSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true
+  },
   email: {
     type: String,
     required: true,
@@ -13,35 +28,32 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  username: {
-    type: String
-  },
   role: {
     type: String,
-    enum: ['free', 'pro', 'admin'],
+    enum: ['free', 'premium', 'admin'],
     default: 'free'
-  },
-  scriptsPurchased: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Script'
-  }],
-  createdAt: {
-    type: Date,
-    default: Date.now
+  }
+}, { timestamps: true });
+
+/**
+ * Pre-save hook para cifrar la contraseña antes de guardarla.
+ */
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
   }
 });
 
-// Middleware para encriptar la contraseña antes de guardar
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
-});
-
-// Método para comparar contraseñas en login
-userSchema.methods.comparePassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
+/**
+ * Método para comparar contraseñas.
+ */
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
 module.exports = mongoose.model('User', userSchema);

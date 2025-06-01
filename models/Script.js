@@ -1,34 +1,38 @@
+// models/Script.js
 const mongoose = require('mongoose');
 
+/**
+ * Esquema de Script.
+ * Incluye:
+ * - title
+ * - description
+ * - price
+ * - downloadUrl
+ * - type: free o pago
+ */
 const scriptSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true
+    required: true,
+    trim: true
   },
   description: {
     type: String
   },
-  category: {
-    type: String,
-    enum: ['Termux', 'Windows', 'Linux', 'Otro'],
-    default: 'Otro'
-  },
   price: {
     type: Number,
-    default: 0  // 0 = gratuito
+    required: true,
+    min: 0
   },
   downloadUrl: {
     type: String,
     required: true
   },
-  premium: {
-    type: Boolean,
-    default: false
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  type: {
+    type: String,
+    enum: ['free', 'paid'],
+    default: 'free'
   }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Script', scriptSchema);

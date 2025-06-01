@@ -1,18 +1,25 @@
-# rk13
+# 🛠️ Tienda de Scripts Backend
 
-A new Flutter project.
+Bienvenido al backend profesional de la **Tienda de Scripts**, desarrollado en Node.js con Express y MongoDB, listo para producción y despliegue en Heroku. Este proyecto permite gestionar usuarios, pagos con PayPal y almacenamiento seguro de scripts con Amazon S3.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 📦 Tecnologías Principales
+- **Node.js + Express**: Framework principal.
+- **MongoDB + Mongoose**: Base de datos robusta y escalable.
+- **JWT**: Autenticación segura.
+- **PayPal**: Procesamiento de pagos (REST API v2).
+- **Amazon S3**: Almacenamiento seguro de scripts.
+- **Winston + Morgan**: Logging profesional.
+- **Joi**: Validación de datos.
+- **Helmet + Rate Limiting**: Seguridad avanzada.
+- **Nodemailer**: Notificaciones por correo (opcional).
 
-A few resources to get you started if this is your first Flutter project:
+---
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 🚀 Instalación y Ejecución
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-lara 
-ghfghdfgh
+1️⃣ **Clona el repositorio**:
+```bash
+git clone https://github.com/tu-usuario/t3r-c0d3-backend.git
+cd t3r-c0d3-backend
