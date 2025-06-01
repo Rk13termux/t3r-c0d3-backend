@@ -1,28 +1,53 @@
+// routes/auth.js
 const express = require('express');
 const router = express.Router();
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-// Ruta: POST /api/auth/register
-router.post('/register', (req, res) => {
-  const { username, email, password } = req.body;
+// LOGIN
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-  // Validación básica
-  if (!email || !password || !username) {
-    return res.status(400).json({ message: 'Username, email y contraseña son requeridos.' });
+    // Validar campos
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email y contraseña son requeridos.' });
+    }
+
+    // Buscar el usuario
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    // Comparar contraseñas
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Contraseña incorrecta.' });
+    }
+
+    // Generar JWT
+    const token = jwt.sign(
+      { id: user._id, username: user.username, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    // Devolver respuesta
+    res.status(200).json({
+      message: 'Login exitoso.',
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error en el servidor.' });
   }
-
-  // Simulación de registro (en la vida real guardarías en MongoDB)
-  const newUser = {
-    id: Date.now(),
-    username,
-    email,
-    password
-  };
-
-  // Enviar respuesta simulada
-  res.status(201).json({
-    message: 'Usuario registrado exitosamente.',
-    user: newUser
-  });
 });
 
 module.exports = router;
